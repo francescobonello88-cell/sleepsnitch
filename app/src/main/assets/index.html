@@ -276,7 +276,7 @@ function poll(){
       dg.textContent = 'rms ' + (st.rms||0).toFixed(4)
         + '  ·  floor ' + (st.floor||0).toFixed(4)
         + '  ·  trigger ' + (st.thr||0).toFixed(4)
-        + '  ·  ' + ((st.blocks||0) > 0 ? 'audio flowing' : 'no audio yet')
+        + '  ·  ' + ((st.rms||0) > 0 ? 'audio flowing' : 'SILENT — mic not delivering audio')
         + ((st.reopens||0) ? '  ·  mic reopened ' + st.reopens + 'x' : '');
     } else {
       dg.textContent = 'mic idle — tap Start and make a noise';
