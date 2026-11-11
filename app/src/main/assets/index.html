@@ -119,6 +119,7 @@ select.time,input[type=time],select{width:100%;background:#0b0b10;border:1px sol
       <div class="peak"><span class="lbl">peak</span><b id="peak">0%</b></div>
     </div>
     <div class="bars" id="bars"></div>
+    <div class="mono" id="diag" style="font-size:10px;color:#6b6b7a;letter-spacing:.04em;margin:2px 0 12px">mic idle — tap Start and make a noise</div>
     <div class="metrics">
       <div class="metric"><span class="lbl">events</span><b id="mEvents">0</b></div>
       <div class="metric"><span class="lbl">screen</span><b id="mScreen" style="font-size:12px">can sleep</b></div>
@@ -269,6 +270,18 @@ function poll(){
   hist.push(st.level || 0); if(hist.length > BARS) hist.shift();
   drawBars();
   $('peak').textContent = Math.round((st.peak||0)*100) + '%';
+  var dg = $('diag');
+  if(dg){
+    if(st.recording) {
+      dg.textContent = 'rms ' + (st.rms||0).toFixed(4)
+        + '  ·  floor ' + (st.floor||0).toFixed(4)
+        + '  ·  trigger ' + (st.thr||0).toFixed(4)
+        + '  ·  ' + ((st.blocks||0) > 0 ? 'audio flowing' : 'no audio yet')
+        + ((st.reopens||0) ? '  ·  mic reopened ' + st.reopens + 'x' : '');
+    } else {
+      dg.textContent = 'mic idle — tap Start and make a noise';
+    }
+  }
   $('timer').firstChild.nodeValue = fmtMs(st.elapsedMs||0);
   if(st.recording === false && session){ stopSession(); toast('Recording ended ('+ (st.error ? 'error' : 'scheduled stop') +').'); }
   if(st.events && st.events.length){

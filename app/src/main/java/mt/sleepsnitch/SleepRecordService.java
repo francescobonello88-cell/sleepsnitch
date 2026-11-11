@@ -65,6 +65,12 @@ public class SleepRecordService extends Service {
 
     private final List<JSONObject> events = new ArrayList<>();
     private final List<JSONObject> fresh = new ArrayList<>();
+    private volatile float rmsRaw = 0f;
+    private volatile float floor = 0.0025f;
+    private volatile long lastAudioAt = 0;
+    private volatile int reopens = 0;
+    private volatile long blocksSeen = 0;
+    private volatile int source = MediaRecorder.AudioSource.MIC;
     private int nextId = 1;
 
     @Override public void onCreate() {
@@ -127,26 +133,26 @@ public class SleepRecordService extends Service {
         wake.acquire();
     }
 
+    private AudioRecord buildRecord(int src) {
+        int min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int bufBytes = Math.max(min, RATE / 4);
+        AudioFormat fmt = new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(RATE)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                .build();
+        return new AudioRecord.Builder()
+                .setAudioSource(src)
+                .setAudioFormat(fmt)
+                .setBufferSizeInBytes(bufBytes * 2)
+                .build();
+    }
+
     private void startRecording() {
         error = null;
         try {
-            int min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            int bufBytes = Math.max(min, RATE / 4);
-            if (Build.VERSION.SDK_INT >= 23) {
-                AudioFormat fmt = new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(RATE)
-                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                        .build();
-                record = new AudioRecord.Builder()
-                        .setAudioSource(MediaRecorder.AudioSource.MIC)
-                        .setAudioFormat(fmt)
-                        .setBufferSizeInBytes(bufBytes * 2)
-                        .build();
-            } else {
-                record = new AudioRecord(MediaRecorder.AudioSource.MIC, RATE,
-                        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufBytes * 2);
-            }
+            source = MediaRecorder.AudioSource.MIC;
+            record = buildRecord(source);
             if (record == null || record.getState() != AudioRecord.STATE_INITIALIZED) {
                 error = "The microphone could not be opened. Close any call, voice assistant or recorder and tap Start again.";
                 return;
@@ -164,9 +170,35 @@ public class SleepRecordService extends Service {
         }
     }
 
-    private float threshold() {
+    /** How far above the measured noise floor counts as a real sound. */
+    private float factor() {
         float s = Math.max(0, Math.min(100, sensitivity)) / 100f;
-        return 0.17f - 0.13f * s;
+        return 6.5f - 5.0f * s;   // sensitivity 0 -> 6.5x, 100 -> 1.5x above floor
+    }
+
+    private float triggerLevel() {
+        return Math.max(0.0035f, floor * factor());
+    }
+
+    private boolean isLoud(long now) {
+        if (now - lastEventAt <= COOLDOWN_MS) return false;
+        return rmsRaw >= triggerLevel();
+    }
+
+    private void reopenCapture() {
+        reopens++;
+        try { record.stop(); } catch (Throwable ignored) { }
+        try { record.release(); } catch (Throwable ignored) { }
+        source = (source == MediaRecorder.AudioSource.MIC)
+                ? MediaRecorder.AudioSource.VOICE_RECOGNITION
+                : MediaRecorder.AudioSource.MIC;
+        try {
+            record = buildRecord(source);
+            record.startRecording();
+            Log.i("SleepSnitch", "capture reopened, source=" + source);
+        } catch (Throwable t) {
+            Log.w("SleepSnitch", "reopen failed", t);
+        }
     }
 
     private void readLoop() {
@@ -193,8 +225,16 @@ public class SleepRecordService extends Service {
                 sum += v * v;
             }
             float rms = (float) (Math.sqrt(sum / n) / 32768.0);
-            float lvl = Math.min(1f, rms * 6f);
-            level = level * 0.6f + lvl * 0.4f;
+            rmsRaw = rms;
+            blocksSeen++;
+            if (rms > 0.0006f) lastAudioAt = System.currentTimeMillis();
+            // adaptive noise floor: falls quickly, rises slowly
+            if (rms < floor) floor = floor * 0.97f + rms * 0.03f;
+            else floor = floor * 0.998f + rms * 0.002f;
+            if (floor < 0.0008f) floor = 0.0008f;
+            float span = Math.max(0.02f, floor * 9f);
+            float lvl = Math.min(1f, rms / span);
+            level = level * 0.55f + lvl * 0.45f;
             if (level > peak) peak = level;
 
             synchronized (ring) {
@@ -206,6 +246,10 @@ public class SleepRecordService extends Service {
             }
 
             long now = System.currentTimeMillis();
+            if (running && now - lastAudioAt > 6000 && reopens < 6) {
+                reopenCapture();
+                lastAudioAt = now;
+            }
             if (stopAtMs > 0 && now >= stopAtMs) {
                 stopRecording();
                 stopSelf();
@@ -216,7 +260,7 @@ public class SleepRecordService extends Service {
                 capBlocks.add(block);
                 if (level > capPeak) capPeak = level;
                 if (now >= capEndsAt) finishCapture(now);
-            } else if (level >= threshold() && now - lastEventAt > COOLDOWN_MS) {
+            } else if (isLoud(now)) {
                 lastEventAt = now;
                 capturing = true;
                 capPeak = level;
@@ -333,6 +377,12 @@ public class SleepRecordService extends Service {
             o.put("recording", running);
             o.put("level", (double) level);
             o.put("peak", (double) peak);
+            o.put("rms", (double) rmsRaw);
+            o.put("floor", (double) floor);
+            o.put("thr", (double) triggerLevel());
+            o.put("reopens", reopens);
+            o.put("blocks", blocksSeen);
+            o.put("source", source);
             o.put("elapsedMs", startedAt > 0 ? System.currentTimeMillis() - startedAt : 0);
             if (error != null) o.put("error", error);
             JSONArray arr = new JSONArray();
