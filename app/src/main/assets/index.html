@@ -3,374 +3,1290 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08080a">
-<title>SleepSnitch</title>
+<meta name="theme-color" content="#0e0f12">
+<meta name="description" content="SleepSnitch — a private night sound recorder that remembers every sound you sleep through.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SleepSnitch">
+
+
+
+<title>SleepSnitch — Night sound recorder</title>
 <style>
 :root{
-  --bg:#08080a; --card:#0d0d11; --card2:#101015; --hair:#1b1b22; --hair2:#26262f;
-  --text:#f3f3f6; --muted:#8d8d99; --dim:#5d5d6a;
-  --acc:#9b8cff; --acc2:#7d6bff; --ok:#5fe3a1; --warn:#ffc978; --bad:#ff7b8a;
-  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+  --bg:#0e0f12; --surface:#15171c; --surface2:#1b1e24; --surface3:#22262f;
+  --line:#262b34; --line2:#333a46;
+  --text:#edeef0; --muted:#9ba1ab; --faint:#6b7280;
+  --accent:#e3b341; --accent-ink:#1a1405; --accent-soft:rgba(227,179,65,.12);
+  --danger:#e5484d; --ok:#46a758;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --radius:16px;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif}
-body{min-height:100vh;background:
-  radial-gradient(1100px 500px at 82% -12%,rgba(155,140,255,.10),transparent 60%),
-  radial-gradient(800px 420px at -10% 22%,rgba(125,107,255,.06),transparent 60%),var(--bg)}
-.wrap{max-width:620px;margin:0 auto;padding:22px 18px 46px}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-/* header */
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
-.brand{display:flex;align-items:center;gap:11px}
-.mark{width:38px;height:38px;border-radius:12px;border:1px solid var(--hair2);display:grid;place-items:center;
-  background:linear-gradient(160deg,#16162a,#0c0c13);position:relative;overflow:hidden}
-.mark:after{content:"";position:absolute;inset:-40% -10% auto auto;width:70%;height:70%;
-  background:radial-gradient(circle,rgba(155,140,255,.45),transparent 70%)}
-.mark span{font-size:17px;filter:saturate(.9)}
-.brand h1{margin:0;font-size:17px;letter-spacing:-.2px;font-weight:700}
-.brand p{margin:1px 0 0;font-size:11.5px;color:var(--dim)}
-.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;
-  border:1px solid var(--hair2);background:#0b0b10;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
-.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
-.pill.live{color:#d9d3ff;border-color:rgba(155,140,255,.45);background:rgba(155,140,255,.09)}
-.pill.live .dot{background:var(--acc);box-shadow:0 0 0 0 rgba(155,140,255,.6);animation:pulse 1.9s infinite}
-@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(155,140,255,0)}100%{box-shadow:0 0 0 0 rgba(155,140,255,0)}}
-/* cards */
-.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--hair);
-  border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
-.card:before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
-.hero{padding:22px 18px 18px}
-.hero-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-.timer{font-family:var(--mono);font-size:38px;line-height:1;letter-spacing:-1.5px;font-weight:700}
-.timer small{display:block;margin-top:7px;font-family:inherit;font-size:10px;letter-spacing:.16em;
-  color:var(--dim);text-transform:uppercase}
-.peak{text-align:right}
-.peak b{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--acc)}
-.bars{display:flex;align-items:flex-end;gap:2.5px;height:88px;margin:6px 0 4px}
-.bars i{flex:1;min-width:2px;border-radius:2px 2px 1px 1px;background:#17171f;transition:height .12s linear,background .12s}
-.metrics{display:flex;gap:10px;margin-top:14px}
-.metric{flex:1;border:1px solid var(--hair);border-radius:13px;padding:10px 12px;background:#0a0a0e}
-.metric b{display:block;font-family:var(--mono);font-size:15px;margin-top:3px}
-/* actions */
-.actions{display:flex;gap:10px;margin:16px 0 6px}
-.btn{flex:1;border:0;border-radius:14px;padding:15px;font-size:14.5px;font-weight:700;letter-spacing:.2px;
-  cursor:pointer;font-family:inherit;transition:transform .12s,filter .15s}
-.btn:active{transform:scale(.985)}
-.btn.primary{background:linear-gradient(160deg,#a99bff,#6f5cf5);color:#0a0714;
-  box-shadow:0 10px 28px -14px rgba(155,140,255,.9)}
-.btn.ghost{background:#0b0b10;border:1px solid var(--hair2);color:var(--muted)}
-.btn[disabled]{opacity:.42;filter:grayscale(.35);cursor:not-allowed}
-/* events */
-.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.event{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--hair)}
-.event:first-of-type{border-top:0}
-.play{width:34px;height:34px;flex:0 0 34px;border-radius:11px;border:1px solid var(--hair2);
-  background:#0b0b10;color:var(--acc);font-size:13px;display:grid;place-items:center;cursor:pointer}
-.event .meta{flex:1;min-width:0}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; color:var(--text); min-height:100vh;
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;color:inherit;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.serif{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-style:italic}
+.app{max-width:1120px;margin:0 auto;padding:0 22px 60px}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;margin:0 -22px;padding:14px 22px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:rgba(14,15,18,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;transition:border-color .3s var(--ease);
+}
+.topbar.scrolled{border-bottom-color:var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:38px;height:38px;border-radius:10px;background:var(--surface3);border:1px solid var(--line2);display:grid;place-items:center;flex:none}
+.mark svg{width:20px;height:20px}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:-.3px;margin:0}
+.brand .tagline{font-size:12.5px;color:var(--muted);margin:0}
+.top-status{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);font-weight:600;border:1px solid var(--line);border-radius:99px;padding:7px 13px;background:var(--surface)}
+.top-status .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.top-status.live{color:#fda4af}.top-status.live .dot{background:var(--danger);animation:pulse 1.6s infinite}
+.top-status.demo{color:#fde68a}.top-status.demo .dot{background:var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ---------- Panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.panel,.topbar{scroll-margin-top:84px}
+.reveal{animation:rise .6s var(--ease) both}
+.reveal:nth-child(2){animation-delay:.06s}.reveal:nth-child(3){animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.panel-head h2{font-size:14px;font-weight:700;letter-spacing:.2px;margin:0}
+.panel-head .sub{font-size:12px;color:var(--faint);margin:2px 0 0}
+.pill{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);border:1px solid var(--line2);border-radius:99px;padding:4px 10px;white-space:nowrap}
+.pill.on{color:var(--accent);border-color:rgba(227,179,65,.45);background:var(--accent-soft)}
+
+/* ---------- Recorder ---------- */
+.recorder{margin-top:22px}
+.rec-top{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center}
+.record-btn{
+  width:88px;height:88px;border-radius:50%;flex:none;position:relative;
+  background:var(--surface2);border:1px solid var(--line2);
+  display:grid;place-items:center;
+  transition:transform .25s var(--ease),border-color .25s var(--ease),background .25s var(--ease);
+}
+.record-btn:hover{transform:scale(1.04)}
+.record-btn:active{transform:scale(.96)}
+.record-btn svg{width:30px;height:30px;transition:opacity .2s}
+.record-btn.active{border-color:var(--accent);background:var(--accent-soft)}
+.record-btn.active::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(227,179,65,.4);animation:ring 2.4s var(--ease) infinite}
+@keyframes ring{0%{transform:scale(.92);opacity:1}100%{transform:scale(1.12);opacity:0}}
+.rec-mid{min-width:0}
+.timer{font-size:clamp(34px,5vw,46px);font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1.05}
+.rec-state{color:var(--muted);font-size:13.5px;margin-top:4px}
+.rec-state b{color:var(--text);font-weight:600}
+.rec-peak{text-align:right}
+.rec-peak .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.rec-peak .l{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.wavebox{margin-top:20px;height:104px;border-radius:12px;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative}
+.wavebox canvas{width:100%;height:100%;display:block}
+.wave-db{position:absolute;right:12px;top:9px;font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.wave-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.meter-row{display:flex;justify-content:space-between;margin-top:12px;font-size:11px;color:var(--faint);font-weight:700;letter-spacing:.6px;font-variant-numeric:tabular-nums}
+.meter{height:5px;border-radius:99px;background:var(--surface3);overflow:hidden;margin-top:7px}
+.meter div{height:100%;width:0%;background:var(--accent);border-radius:99px}
+.rec-controls{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+.hint{font-size:12.5px;color:var(--faint);margin-left:auto}
+.last-summary{display:flex;align-items:center;gap:12px;margin-top:16px;padding:12px 15px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--surface2);font-size:13px;color:var(--muted)}
+.last-summary[hidden]{display:none}
+.last-summary b{color:var(--text)}
+.last-summary .x{margin-left:auto;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--faint);flex:none}
+.last-summary .x:hover{background:var(--surface3);color:var(--text)}
+.empty-cta{margin-top:14px}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;font-size:13.5px;border:1px solid var(--line2);background:var(--surface2);transition:background .2s var(--ease),transform .15s var(--ease),border-color .2s}
+.btn:hover:not(:disabled){background:var(--surface3)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn svg{width:15px;height:15px;flex:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover:not(:disabled){background:#eec25e}
+.btn-danger{color:#fda4af;border-color:rgba(229,72,77,.4)}
+.btn-danger:hover:not(:disabled){background:rgba(229,72,77,.1)}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--surface2);display:inline-grid;place-items:center;transition:background .2s,transform .15s;flex:none}
+.icon-btn:hover{background:var(--surface3)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:16px;height:16px}
+.icon-btn.playing{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+/* ---------- Notices ---------- */
+.notice{border:1px solid var(--line2);border-left:3px solid var(--accent);background:var(--surface2);border-radius:10px;padding:13px 15px;font-size:13px;color:var(--muted);margin-top:16px}
+.notice.danger{border-left-color:var(--danger);color:#fecdd3}
+.notice[hidden]{display:none}
+.notice b{color:var(--text)}
+.notice ol{margin:8px 0 0;padding-left:20px}
+
+/* ---------- Stats strip ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:18px;padding:18px 22px}
+.stat{padding:2px 18px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0;padding-left:0}
+.stat .v{font-size:26px;font-weight:700;letter-spacing:-.8px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .l{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-top:3px}
+
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:1.45fr .9fr;gap:18px;margin-top:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* ---------- Events ---------- */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.chip{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:99px;padding:6px 12px;transition:all .2s var(--ease)}
+.chip:hover{color:var(--text);border-color:var(--faint)}
+.chip.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.day-head{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin:18px 0 4px}
+.day-head:first-child{margin-top:4px}
+.event{display:grid;grid-template-columns:44px 1fr auto;gap:13px;align-items:center;padding:13px 6px;border-bottom:1px solid var(--line);border-radius:8px;transition:background .2s;animation:rise .45s var(--ease) both}
+.event:hover{background:var(--surface2)}
+.event:last-child{border-bottom:0}
+.event-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center}
+.event-icon svg{width:21px;height:21px}
 .event h4{margin:0;font-size:13.5px;font-weight:650}
-.event p{margin:2px 0 0;font-size:11px;color:var(--dim);font-family:var(--mono)}
-.sel{background:#0b0b10;border:1px solid var(--hair2);color:var(--muted);border-radius:9px;
-  padding:6px 8px;font-size:11px;font-family:inherit}
-.x{background:none;border:0;color:var(--dim);font-size:17px;padding:4px 6px;cursor:pointer}
-.empty{padding:22px 4px;text-align:center;color:var(--dim);font-size:12.5px}
-/* settings */
-.field{margin-bottom:14px}
-.field label{display:block;margin-bottom:7px}
-input[type=range]{width:100%;accent-color:var(--acc)}
-select.time,input[type=time],select{width:100%;background:#0b0b10;border:1px solid var(--hair2);
-  color:var(--text);border-radius:11px;padding:10px;font-family:inherit;font-size:13.5px}
+.event p{margin:2px 0 0;color:var(--faint);font-size:12px;font-variant-numeric:tabular-nums}
+.db-badge{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;border:1px solid var(--line2);border-radius:99px;padding:3px 9px;color:var(--muted);white-space:nowrap}
+.db-badge.loud{color:#fde68a;border-color:rgba(227,179,65,.45)}
+.db-badge.veryloud{color:#fda4af;border-color:rgba(229,72,77,.45)}
+.event-actions{display:flex;align-items:center;gap:7px}
+select.mini{background:var(--surface2);border:1px solid var(--line2);color:var(--text);border-radius:9px;padding:7px 26px 7px 10px;font-size:12px;font-weight:600;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239ba1ab' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.tag{font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--muted);border:1px solid var(--line2);padding:3px 7px;border-radius:99px}
+.tag.demo{color:#fde68a;border-color:rgba(227,179,65,.4)}
+.empty{padding:38px 20px;text-align:center;color:var(--faint);font-size:13.5px}
+.empty svg{width:40px;height:40px;margin-bottom:10px;opacity:.6}
+
+/* ---------- Settings ---------- */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.set-row:last-child{border-bottom:0}
+.set-row .lbl{font-size:13.5px;font-weight:600}
+.set-row .lbl small{display:block;font-weight:400;color:var(--faint);font-size:12px;margin-top:2px}
+.set-row output{font-size:12.5px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.set-block{padding:13px 0;border-bottom:1px solid var(--line)}
+.set-block:last-child{border-bottom:0}
+.set-block .lbl{display:flex;justify-content:space-between;font-size:13.5px;font-weight:600;margin-bottom:10px}
+.set-block .lbl output{font-size:12.5px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.set-block .note{margin:8px 0 0}
+input[type=range]{width:100%;appearance:none;-webkit-appearance:none;height:5px;border-radius:99px;background:var(--surface3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--text);border:5px solid var(--surface3);box-shadow:0 1px 6px rgba(0,0,0,.5);cursor:grab}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--text);border:4px solid var(--surface3);cursor:grab}
+.field select,.field input[type=time]{width:100%;background:var(--surface2);border:1px solid var(--line2);color:var(--text);border-radius:10px;padding:9px 11px;outline:none}
+.field select:focus,.field input:focus{border-color:var(--accent)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.note{font-size:11.5px;color:var(--dim);line-height:1.6;margin:12px 0 0}
-.ghostrow{display:flex;gap:10px;margin-top:12px}
-.ghostrow .btn{font-size:12.5px;padding:12px}
-/* gate */
-.gate{position:fixed;inset:0;background:rgba(6,6,9,.94);backdrop-filter:blur(6px);display:none;
-  align-items:center;justify-content:center;padding:22px;z-index:50}
-.gate.show{display:flex}
-.gate .box{max-width:380px;background:var(--card2);border:1px solid var(--hair2);border-radius:20px;padding:22px;text-align:center}
-.gate h3{margin:0 0 8px;font-size:16px}
-.gate p{margin:0 0 16px;color:var(--muted);font-size:13px}
-.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
-  background:#15151d;border:1px solid var(--hair2);color:var(--text);padding:11px 16px;border-radius:12px;
-  font-size:12.5px;transition:.22s;z-index:60;max-width:88vw;text-align:center}
+.two .field label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.toggle{appearance:none;-webkit-appearance:none;width:44px;height:26px;background:var(--surface3);border:1px solid var(--line2);border-radius:99px;position:relative;transition:background .25s var(--ease);flex:none;cursor:pointer;margin:0}
+.toggle:checked{background:var(--accent);border-color:var(--accent)}
+.toggle:before{content:"";position:absolute;width:20px;height:20px;left:2px;top:2px;background:#fff;border-radius:50%;transition:transform .25s var(--ease)}
+.toggle:checked:before{transform:translateX(18px)}
+.note{color:var(--faint);font-size:12px;line-height:1.6;margin:0}
+.btn-col{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.btn-col .btn{justify-content:center}
+
+/* ---------- Diagnostics ---------- */
+.diag-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.diag-row:last-child{border-bottom:0}
+.diag-row .ic{width:22px;height:22px;flex:none;display:grid;place-items:center}
+.diag-row .ic svg{width:19px;height:19px}
+.diag-row .nm{font-weight:600}
+.diag-row .dt{margin-left:auto;color:var(--faint);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.diag-actions{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.storage-line{font-size:12px;color:var(--faint);margin-top:12px;font-variant-numeric:tabular-nums}
+
+/* ---------- Nights ---------- */
+.night-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.night-row:last-child{border-bottom:0}
+.night-row b{display:block;font-size:13.5px}
+.night-row span{font-size:12px;color:var(--faint)}
+.night-dur{font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;color:var(--muted)}
+
+.footer{color:var(--faint);text-align:center;font-size:12px;margin-top:28px;line-height:1.7}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,14px);background:var(--surface3);border:1px solid var(--line2);padding:11px 18px;border-radius:12px;color:var(--text);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:60;max-width:90vw;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-.footer{text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:#3a3a45;margin-top:26px}
+
+/* ---------- Modal ---------- */
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
+.modal-back.open{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:24px;width:min(420px,92vw);transform:scale(.96) translateY(8px);transition:transform .3s var(--ease)}
+.modal-back.open .modal{transform:none}
+.modal h3{margin:0 0 8px;font-size:16px}
+.modal p{margin:0 0 20px;color:var(--muted);font-size:13.5px}
+.modal .row{display:flex;gap:10px;justify-content:flex-end}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr;gap:14px 0}.stat:nth-child(3){border-left:0;padding-left:0}}
+@media(max-width:640px){
+  .app{padding:0 14px 48px}.topbar{margin:0 -14px;padding:12px 14px}
+  .panel{padding:18px}
+  .rec-top{grid-template-columns:auto 1fr;gap:16px}
+  .rec-peak{display:none}
+  .record-btn{width:76px;height:76px}
+  .event{grid-template-columns:40px 1fr}.event-icon{width:40px;height:40px}
+  .event-actions{grid-column:2;justify-content:flex-start;flex-wrap:wrap}
+  .hint{margin-left:0;width:100%}
+  .brand .tagline{display:none}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
 
-  <div class="top">
-    <div class="brand">
-      <div class="mark"><span>🌙</span></div>
-      <div><h1>SleepSnitch</h1><p>night recorder</p></div>
-    </div>
-    <div class="pill" id="statusPill"><span class="dot"></span><span id="statusTxt">Idle</span></div>
+<header class="topbar" id="topbar">
+  <div class="brand">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#e3b341" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 14.2A8.8 8.8 0 1 1 9.8 3.4a.6.6 0 0 1 .8.8 7 7 0 0 0 9.2 9.2.6.6 0 0 1 .8.8Z"/></svg></div>
+    <div><h1>SleepSnitch</h1><p class="tagline serif">your night, decoded</p></div>
   </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn" id="installBtn" hidden style="padding:8px 14px;font-size:12.5px">Install app</button>
+    <div class="top-status" id="topStatus"><i class="dot"></i><span id="topStatusText">Microphone off</span></div>
+  </div>
+</header>
 
-  <section class="card hero">
-    <div class="hero-top">
-      <div>
-        <div class="timer mono" id="timer">00:00:00<small>session</small></div>
-      </div>
-      <div class="peak"><span class="lbl">peak</span><b id="peak">0%</b></div>
+<!-- Recorder -->
+<section class="panel recorder reveal">
+  <div class="panel-head">
+    <div><h2>Recorder</h2><p class="sub">Everything is stored on this device — nothing is uploaded.</p></div>
+    <span class="pill" id="sessionBadge">NO SESSION</span>
+  </div>
+  <div class="rec-top">
+    <button class="record-btn" id="recordBtn" aria-pressed="false" aria-label="Start listening">
+      <svg id="recordIconMic" viewBox="0 0 24 24" fill="none" stroke="#edeef0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+      <svg id="recordIconStop" viewBox="0 0 24 24" fill="#e3b341" style="display:none"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+    </button>
+    <div class="rec-mid">
+      <div class="timer" id="timerText">00:00:00</div>
+      <div class="rec-state" id="recState">Tap the button to start. Speak or clap to test the mic.</div>
     </div>
-    <div class="bars" id="bars"></div>
-    <div class="mono" id="diag" style="font-size:10px;color:#6b6b7a;letter-spacing:.04em;margin:2px 0 12px">mic idle — tap Start and make a noise</div>
-    <div class="metrics">
-      <div class="metric"><span class="lbl">events</span><b id="mEvents">0</b></div>
-      <div class="metric"><span class="lbl">screen</span><b id="mScreen" style="font-size:12px">can sleep</b></div>
-      <div class="metric"><span class="lbl">source</span><b style="font-size:12px">native</b></div>
+    <div class="rec-peak"><div class="v" id="peakLevel">—</div><div class="l">Peak level</div></div>
+  </div>
+  <div class="wavebox"><span class="wave-db" id="waveDb">— dB</span><canvas id="wave"></canvas></div>
+  <div class="wave-scale"><span>−60 dB</span><span>−40 dB</span><span>−20 dB</span><span>0 dB</span></div>
+  <div class="meter-row"><span id="levelText">INPUT LEVEL 0%</span><span id="elapsed">SESSION 00:00:00</span></div>
+  <div class="meter"><div id="meterFill"></div></div>
+  <div class="rec-controls">
+    <button class="btn" id="demoBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg> Demo mode</button>
+    <span class="hint">No mic handy? Demo mode simulates a night of sounds.</span>
+  </div>
+  <div class="last-summary" id="lastSummary" hidden>
+    <span id="lastSummaryText"></span>
+    <button class="x" id="dismissSummary" aria-label="Dismiss summary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="notice danger" id="micHelp" hidden>
+    <b>Microphone couldn't start.</b> Check these, then try again:
+    <ol>
+      <li>Open this page over <b>HTTPS</b> (or <b>localhost</b>) — browsers block the mic on plain files.</li>
+      <li>Click the lock / site-settings icon in the address bar and allow the microphone.</li>
+      <li>Make sure no other app (Zoom, Teams, etc.) is using the mic.</li>
+    </ol>
+  </div>
+  <div class="notice" id="notice" hidden><span id="noticeText"></span></div>
+</section>
+
+<!-- Stats -->
+<section class="panel stats reveal" aria-label="Tonight at a glance">
+  <div class="stat"><div class="v" id="eventCount">0</div><div class="l">Sounds caught</div></div>
+  <div class="stat"><div class="v" id="listenTime">0m</div><div class="l">Listening time</div></div>
+  <div class="stat"><div class="v" id="clipCount">0</div><div class="l">Clips remembered</div></div>
+  <div class="stat"><div class="v" id="nightsCount">0</div><div class="l">Nights logged</div></div>
+</section>
+
+<div class="layout">
+  <!-- Events -->
+  <section class="panel reveal">
+    <div class="panel-head">
+      <div><h2>Detected sounds</h2><p class="sub">Saved automatically and remembered across visits.</p></div>
+      <span class="pill" id="eventPill">0 EVENTS</span>
     </div>
-    <div class="actions">
-      <button class="btn primary" id="startBtn">Start listening</button>
-      <button class="btn ghost" id="stopBtn" disabled>Stop</button>
+    <div class="chips" id="filterChips" role="group" aria-label="Filter by label"></div>
+    <div id="events"></div>
+    <div class="btn-col">
+      <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg> Export event list (CSV)</button>
+      <button class="btn" id="backupBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 15V3m0 0 4 4m-4-4L8 7M4 19h16"/></svg> Back up all clips</button>
+      <button class="btn" id="importBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg> Restore from backup</button>
+      <button class="btn" id="downloadAllBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg> Download all clips</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+      <button class="btn btn-danger" id="clearBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m3 0v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7"/></svg> Clear all clips</button>
     </div>
   </section>
 
-  <section class="card">
-    <div class="sec-head">
-      <span class="lbl">detected sounds</span>
-      <span class="lbl" id="evCount">0 saved</span>
-    </div>
-    <div id="events" class="empty">Nothing yet — louder moments appear here.</div>
-  </section>
-
-  <section class="card">
-    <div class="sec-head"><span class="lbl">settings</span><span class="lbl">live</span></div>
-    <div class="field">
-      <label class="lbl" for="sens">sensitivity · <span id="sensVal">60</span></label>
-      <input type="range" id="sens" min="10" max="95" value="60">
-    </div>
-    <div class="two">
-      <div class="field">
-        <label class="lbl" for="clip">clip length</label>
-        <select id="clip">
-          <option value="4000">4 seconds</option>
-          <option value="6000" selected>6 seconds</option>
-          <option value="10000">10 seconds</option>
-        </select>
+  <div class="col">
+    <!-- Settings -->
+    <aside class="panel reveal">
+      <div class="panel-head"><div><h2>Settings</h2></div><span class="pill">SAVED AUTOMATICALLY</span></div>
+      <div class="set-block">
+        <div class="lbl"><span>Detection sensitivity</span><output id="sensOut">Balanced</output></div>
+        <input type="range" id="sensitivity" min="0" max="100" value="60" aria-label="Detection sensitivity">
+        <p class="note">Higher catches quieter sounds (more clips). Lower only catches loud bangs. The dashed line on the waveform shows the current threshold.</p>
       </div>
-      <div class="field">
-        <label class="lbl" for="stopAt">stop at (optional)</label>
-        <input type="time" id="stopAt">
+      <div class="set-block">
+        <div class="lbl"><span>Min. time between events</span><output id="coolOut">15s</output></div>
+        <input type="range" id="cooldown" min="5" max="60" step="5" value="15" aria-label="Minimum time between events">
       </div>
-    </div>
-    <p class="note">Recording runs in a background service, so locking the screen does not stop it. Audio stays on this phone. Label clips yourself.</p>
-    <div class="ghostrow">
-      <button class="btn ghost" id="exportBtn">Export CSV</button>
-      <button class="btn ghost" id="clearBtn">Clear all</button>
-    </div>
-  </section>
+      <div class="set-block">
+        <div class="lbl"><span>Clip length after a sound</span><output id="clipOut">6s</output></div>
+        <input type="range" id="clipLength" min="3" max="15" step="1" value="6" aria-label="Clip length">
+        <p class="note">Each clip also includes 3 seconds from just before the sound.</p>
+      </div>
+      <div class="set-row field">
+        <div class="lbl">Microphone<small>Allow mic access to see device names.</small></div>
+        <select id="deviceSelect" style="width:46%"><option value="">Default microphone</option></select>
+      </div>
+      <div class="two" style="padding-top:13px">
+        <div class="field"><label for="bedtime">Auto-start</label><input id="bedtime" type="time" value="22:30"></div>
+        <div class="field"><label for="wake">Auto-stop</label><input id="wake" type="time" value="07:00"></div>
+      </div>
+      <div class="set-row"><div class="lbl">Enable schedule<small>Page must stay open. Grant mic permission once by starting manually.</small></div><input class="toggle" type="checkbox" id="schedule"></div>
+      <div class="set-row"><div class="lbl">Keep screen awake<small>During a session.</small></div><input class="toggle" type="checkbox" id="wakeLock" checked></div>
+      <div class="set-row"><div class="lbl">Background mode<small>Keeps recording when you switch apps (best on Android / Chrome).</small></div><input class="toggle" type="checkbox" id="bgMode" checked></div>
+      <p class="note" style="margin-top:12px">Detection uses volume changes, not an AI classifier — label clips yourself (snore, cough, talking, laugh, movement or other). Audio never leaves this device.</p>
+    </aside>
 
-  <div class="footer">SLEEPSNITCH · NATIVE AUDIO ENGINE · PRIVATE BY DESIGN</div>
+    <!-- Diagnostics -->
+    <aside class="panel reveal">
+      <div class="panel-head"><div><h2>Health check</h2><p class="sub">Every feature, tested in your browser.</p></div><span class="pill" id="diagSummary">…</span></div>
+      <div id="diagList"><p class="note">Running checks…</p></div>
+      <div class="diag-actions">
+        <button class="btn" id="runDiagBtn">Re-run checks</button>
+        <button class="btn" id="persistTestBtn">Save a test sound &amp; verify it sticks</button>
+      </div>
+      <p class="storage-line" id="diagStorage"></p>
+    </aside>
+
+    <!-- Past nights -->
+    <aside class="panel reveal">
+      <div class="panel-head"><div><h2>Past nights</h2><p class="sub">A log of every finished session.</p></div><button class="btn" id="clearNightsBtn" style="padding:7px 12px;font-size:12px">Clear log</button></div>
+      <div id="nightsList"></div>
+    </aside>
+  </div>
 </div>
 
-<div class="gate" id="gate">
-  <div class="box">
-    <h3>Microphone needed</h3>
-    <p id="gateText">SleepSnitch needs microphone access to listen for sounds overnight.</p>
-    <button class="btn primary" id="gateBtn">Allow microphone</button>
+<div class="footer">SleepSnitch v2.1 · Private by design · Works offline once installed<br><span id="footerStorage"></span></div>
+</div>
+
+<div class="modal-back" id="modalBack" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <h3 id="modalTitle">Delete everything?</h3>
+    <p id="modalText">This permanently deletes all saved clips from this browser. This cannot be undone.</p>
+    <div class="row">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirm">Delete all</button>
+    </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
+<noscript><p style="padding:20px;text-align:center">SleepSnitch needs JavaScript to run.</p></noscript>
 
 <script>
-var $ = function(id){ return document.getElementById(id); };
-var api = window.SnitchNative;
-var session = false, pollTimer = null, hist = [], events = [], seen = {}, labels = {};
-var BARS = 56;
+"use strict";
+const $ = id => document.getElementById(id);
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+window.addEventListener("error", e => console.error("SleepSnitch error:", e.error || e.message));
+window.addEventListener("unhandledrejection", e => console.error("SleepSnitch rejection:", e.reason));
 
-function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show')},3200); }
-function pad(n){ return n<10?('0'+n):(''+n); }
-function fmtMs(ms){ var s=Math.floor(ms/1000); return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60); }
-function fmtTime(ts){ var d=new Date(ts); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+/* ---------- State ---------- */
+let stream = null, audioCtx = null, analyser = null, mediaRecorder = null, timeData = null;
+let sessionActive = false, sessionStart = 0, totalListenMs = 0, autoStarted = false;
+let peakRms = 0, lastEventAt = 0, aboveCount = 0, eventsThisSession = 0;
+let pending = null, recentChunks = [], history = [], smoothHist = [];
+let demoMode = false, demoSpikeUntil = 0, demoSpikeLevel = 0;
+let events = [], activeFilter = "All";
+let wakeLock = null, currentAudio = null, currentObjectUrl = null;
+let memoryStore = new Map(), useMemory = false;
+let silenceSince = 0, silenceWarned = false, meterLevel = 0;
+let elapsedTimer = null, modalConfirmFn = null;
+let busy = false, renderToken = 0, nightsCountCache = 0;
+let allTimePeakDb = null;
+let keepAliveAudio = null, keepAliveTimer = null, deferredInstall = null;
 
-/* bars */
-(function(){ var b=$('bars'); for(var i=0;i<BARS;i++){ var el=document.createElement('i'); el.style.height='6%'; b.appendChild(el);} })();
-function drawBars(){
-  var b=$('bars').children;
-  for(var i=0;i<b.length;i++){
-    var v = hist[i] || 0;
-    var h = Math.max(5, Math.min(100, v*115));
-    b[i].style.height = h.toFixed(1)+'%';
-    b[i].style.background = v>0.62 ? 'linear-gradient(180deg,#c3b9ff,#7d6bff)'
-      : v>0.3 ? 'linear-gradient(180deg,#8f86d8,#5f54a8)' : '#17171f';
-  }
+/* ---------- Settings (persisted) ---------- */
+const SETTINGS_KEY = "sleepsnitch-settings-v2", INDEX_KEY = "sleepsnitch-index-v1", NIGHTS_KEY = "sleepsnitch-nights-v1", TOTALS_KEY = "sleepsnitch-totals-v1";
+function loadSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    if(s.sensitivity != null) $("sensitivity").value = s.sensitivity;
+    if(s.cooldown != null) $("cooldown").value = s.cooldown;
+    if(s.clipLength != null) $("clipLength").value = s.clipLength;
+    if(s.bedtime) $("bedtime").value = s.bedtime;
+    if(s.wake) $("wake").value = s.wake;
+    if(s.schedule != null) $("schedule").checked = !!s.schedule;
+    if(s.wakeLock != null) $("wakeLock").checked = !!s.wakeLock;
+    if(s.bgMode != null) $("bgMode").checked = !!s.bgMode;
+    if(s.deviceSelect) $("deviceSelect").value = s.deviceSelect;
+  }catch(e){}
+  updateSettingLabels();
 }
-
-/* permissions */
-window.__snitchPerm = function(ok){
-  if(ok){ $('gate').classList.remove('show'); toast('Microphone ready'); }
-  else { $('gateText').textContent='Permission denied. Enable the microphone for SleepSnitch in Android settings, then reopen the app.'; $('gate').classList.add('show'); }
-};
-function requireMic(){
-  if(!api){ toast('Native bridge missing'); return false; }
-  if(!api.hasMic()){ $('gate').classList.add('show'); return false; }
-  $('gate').classList.remove('show'); return true;
-}
-$('gateBtn').onclick = function(){ if(api) api.askMic(); };
-
-/* settings persistence */
-try{
-  var saved = JSON.parse(localStorage.getItem('snitch_settings')||'{}');
-  if(saved.sens) $('sens').value = saved.sens;
-  if(saved.clip) $('clip').value = saved.clip;
-  labels = JSON.parse(localStorage.getItem('snitch_labels')||'{}');
-}catch(e){}
-$('sens').oninput = function(){ $('sensVal').textContent = this.value; saveSettings(); };
-$('clip').onchange = saveSettings;
 function saveSettings(){
-  try{ localStorage.setItem('snitch_settings', JSON.stringify({sens:$('sens').value, clip:$('clip').value})); }catch(e){}
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    sensitivity: $("sensitivity").value, cooldown: $("cooldown").value, clipLength: $("clipLength").value,
+    bedtime: $("bedtime").value, wake: $("wake").value, schedule: $("schedule").checked,
+    wakeLock: $("wakeLock").checked, bgMode: $("bgMode").checked, deviceSelect: $("deviceSelect").value })); }catch(e){}
 }
-$('sensVal').textContent = $('sens').value;
-
-/* session */
-function startSession(){
-  if(!requireMic()) return;
-  if(session) return;
-  var stopAt = 0;
-  var t = $('stopAt').value;
-  if(t){
-    var p = t.split(':'); var d = new Date(); d.setHours(parseInt(p[0],10), parseInt(p[1],10), 0, 0);
-    if(d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
-    stopAt = d.getTime();
-  }
-  try{ api.start(parseInt($('sens').value,10), parseInt($('clip').value,10), stopAt); }
-  catch(e){ toast('Could not start: '+e); return; }
-  session = true; hist = [];
-  $('startBtn').disabled = true; $('stopBtn').disabled = false;
-  $('statusPill').className = 'pill live'; $('statusTxt').textContent = 'Listening';
-  $('mScreen').textContent = 'can sleep';
-  if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(poll, 260);
-  poll();
-  toast('Listening in the background — lock the screen and sleep.');
+function loadTotals(){
+  try{
+    const t = JSON.parse(localStorage.getItem(TOTALS_KEY) || "{}");
+    totalListenMs = Number(t.listenMs) || 0;
+    allTimePeakDb = (t.peakDb != null && !isNaN(t.peakDb)) ? Number(t.peakDb) : null;
+  }catch(e){}
 }
-
-function stopSession(){
-  if(!session) return;
-  try{ api.stop(); }catch(e){}
-  session = false;
-  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
-  $('startBtn').disabled = false; $('stopBtn').disabled = true;
-  $('statusPill').className = 'pill'; $('statusTxt').textContent = 'Idle';
-  hist = []; drawBars(); $('peak').textContent = '0%';
-  toast('Session stopped. Clips are saved on this phone.');
+function saveTotals(){
+  try{ localStorage.setItem(TOTALS_KEY, JSON.stringify({listenMs: totalListenMs, peakDb: allTimePeakDb})); }catch(e){}
 }
-
-function poll(){
-  if(!api) return;
-  var st;
-  try{ st = JSON.parse(api.state() || '{}'); }catch(e){ return; }
-  if(st.error){ toast(st.error); }
-  hist.push(st.level || 0); if(hist.length > BARS) hist.shift();
-  drawBars();
-  $('peak').textContent = Math.round((st.peak||0)*100) + '%';
-  var dg = $('diag');
-  if(dg){
-    if(st.recording) {
-      dg.textContent = 'rms ' + (st.rms||0).toFixed(4)
-        + '  ·  floor ' + (st.floor||0).toFixed(4)
-        + '  ·  trigger ' + (st.thr||0).toFixed(4)
-        + '  ·  ' + ((st.rms||0) > 0 ? 'audio flowing' : 'SILENT — mic not delivering audio')
-        + ((st.reopens||0) ? '  ·  mic reopened ' + st.reopens + 'x' : '');
-    } else {
-      dg.textContent = 'mic idle — tap Start and make a noise';
-    }
-  }
-  $('timer').firstChild.nodeValue = fmtMs(st.elapsedMs||0);
-  if(st.recording === false && session){ stopSession(); toast('Recording ended ('+ (st.error ? 'error' : 'scheduled stop') +').'); }
-  if(st.events && st.events.length){
-    st.events.forEach(function(ev){ if(!seen[ev.id]){ seen[ev.id]=1; events.push(ev); } });
-    renderEvents();
-  }
+function sensLabel(v){ v = Number(v); return v >= 80 ? "Very sensitive" : v >= 65 ? "Sensitive" : v >= 45 ? "Balanced" : v >= 25 ? "Selective" : "Loud only"; }
+function updateSettingLabels(){
+  $("sensOut").textContent = sensLabel($("sensitivity").value);
+  $("coolOut").textContent = $("cooldown").value + "s";
+  $("clipOut").textContent = $("clipLength").value + "s";
 }
-
-/* events */
-function renderEvents(){
-  var box = $('events');
-  $('evCount').textContent = events.length + ' saved';
-  $('mEvents').textContent = String(events.length);
-  if(!events.length){ box.className='empty'; box.innerHTML='Nothing yet — louder moments appear here.'; return; }
-  box.className='';
-  var html='';
-  var list = events.slice().sort(function(a,b){ return b.t-a.t; });
-  list.forEach(function(ev){
-    var lab = labels[ev.id] || 'Sound';
-    html += '<div class="event">'
-      + '<button class="play" data-play="'+ev.id+'">&#9654;</button>'
-      + '<div class="meta"><h4>'+lab+' · '+fmtTime(ev.t)+'</h4>'
-      + '<p>level '+Math.round((ev.level||0)*100)+'% · '+Math.round((ev.dur||0)/1000)+'s</p></div>'
-      + '<select class="sel" data-lab="'+ev.id+'">'
-      + ['Sound','Snore','Cough','Talking','Laugh','Movement'].map(function(o){
-          return '<option'+(o===lab?' selected':'')+'>'+o+'</option>'; }).join('')
-      + '</select>'
-      + '<button class="x" data-del="'+ev.id+'">&times;</button>'
-      + '</div>';
-  });
-  box.innerHTML = html;
-}
-
-$('events').addEventListener('click', function(e){
-  var p = e.target.getAttribute('data-play');
-  var d = e.target.getAttribute('data-del');
-  if(p){ try{ api.play(parseInt(p,10)); toast('Playing clip'); }catch(err){} }
-  if(d){
-    try{ api.delete(parseInt(d,10)); }catch(err){}
-    events = events.filter(function(x){ return String(x.id) !== d; });
-    renderEvents();
-  }
-});
-$('events').addEventListener('change', function(e){
-  var id = e.target.getAttribute('data-lab');
-  if(id){ labels[id] = e.target.value; try{ localStorage.setItem('snitch_labels', JSON.stringify(labels)); }catch(err){} renderEvents(); }
+["sensitivity","cooldown","clipLength","bedtime","wake","schedule","wakeLock","bgMode","deviceSelect"].forEach(id => {
+  $(id).addEventListener("input", () => { updateSettingLabels(); saveSettings(); });
+  $(id).addEventListener("change", () => { updateSettingLabels(); saveSettings(); });
 });
 
-/* export + clear */
-$('exportBtn').onclick = function(){
-  var rows = [['Time','Label','Level','Duration']];
-  events.slice().sort(function(a,b){ return a.t-b.t; }).forEach(function(ev){
-    rows.push([new Date(ev.t).toISOString(), labels[ev.id]||'Sound', Math.round((ev.level||0)*100)+'%', Math.round((ev.dur||0)/1000)+'s']);
+/* ---------- Level math ---------- */
+function thresholdRms(){
+  const sens = Number($("sensitivity").value);
+  const thresholdDb = -55 + (100 - sens) * 0.35;
+  return Math.pow(10, thresholdDb / 20);
+}
+function rmsToDb(rms){ return rms <= 0.0001 ? -70 : Math.max(-70, Math.min(0, 20 * Math.log10(rms))); }
+function rmsToPct(rms){ return Math.min(100, Math.round(rms * 400)); }
+function getRms(){
+  if(!analyser || !timeData) return 0;
+  analyser.getByteTimeDomainData(timeData);
+  let sum = 0;
+  for(let i = 0; i < timeData.length; i++){ const v = (timeData[i] - 128) / 128; sum += v * v; }
+  return Math.sqrt(sum / timeData.length);
+}
+function fmt(s){ s = Math.max(0, Math.floor(s)); return [Math.floor(s/3600), Math.floor(s%3600/60), s%60].map(n => String(n).padStart(2, "0")).join(":"); }
+function fmtBytes(b){ if(b == null) return ""; if(b < 1024) return b + " B"; if(b < 1048576) return (b/1024).toFixed(1) + " KB"; return (b/1048576).toFixed(1) + " MB"; }
+function nowLabel(t){ return new Date(t).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit"}); }
+function newId(){ return (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2)); }
+
+/* ---------- Storage layer (IndexedDB + memory fallback + local index) ---------- */
+const DB_NAME = "sleepsnitch-local", STORE = "clips";
+function dbOpen(){
+  return new Promise((resolve, reject) => {
+    try{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => { if(!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, {keyPath: "id"}); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    }catch(e){ reject(e); }
   });
-  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
-  if(api && api.saveText){ api.saveText('sleepsnitch-events.csv', csv); toast('Saved CSV to Downloads'); }
-  else toast('Export unavailable');
-};
-
-$('clearBtn').onclick = function(){
-  if(!confirm('Delete every saved clip from this phone?')) return;
-  try{ api.clearAll(); }catch(e){}
-  events = []; seen = {}; renderEvents(); toast('All clips deleted');
-};
-
-$('startBtn').onclick = startSession;
-$('stopBtn').onclick = stopSession;
-
-/* boot */
-(function boot(){
-  drawBars();
-  if(!api){ $('gateText').textContent='Native bridge unavailable. Reinstall the app.'; $('gate').classList.add('show'); return; }
-  if(!api.hasMic()){ $('gate').classList.add('show'); } else { $('gate').classList.remove('show'); }
-  try{
-    var list = JSON.parse(api.events() || '[]');
-    list.forEach(function(ev){ if(!seen[ev.id]){ seen[ev.id]=1; events.push(ev); } });
-    renderEvents();
-  }catch(e){}
-  // if a session is already running (page reopened), attach to it
-  try{
-    var st = JSON.parse(api.state() || '{}');
-    if(st.recording){
-      session = true;
-      $('startBtn').disabled = true; $('stopBtn').disabled = false;
-      $('statusPill').className = 'pill live'; $('statusTxt').textContent = 'Listening';
-      pollTimer = setInterval(poll, 260);
+}
+async function idbPut(item){
+  const db = await dbOpen();
+  await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(item);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+  db.close();
+}
+async function idbGetAll(){
+  const db = await dbOpen();
+  const data = await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, "readonly");
+    const r = tx.objectStore(STORE).getAll();
+    r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error);
+  });
+  db.close();
+  return data.sort((a, b) => a.time - b.time);
+}
+async function idbDelete(id){
+  const db = await dbOpen();
+  await new Promise(res => { const tx = db.transaction(STORE, "readwrite"); tx.objectStore(STORE).delete(id); tx.oncomplete = res; tx.onerror = res; });
+  db.close();
+}
+async function idbClear(){
+  const db = await dbOpen();
+  await new Promise(res => { const tx = db.transaction(STORE, "readwrite"); tx.objectStore(STORE).clear(); tx.oncomplete = res; tx.onerror = res; });
+  db.close();
+}
+async function saveClip(item, opts = {}){
+  if(useMemory){ memoryStore.set(item.id, item); }
+  else{
+    try{ await idbPut(item); }
+    catch(e){
+      useMemory = true; memoryStore.set(item.id, item);
+      showNotice("Browser storage is unavailable here (private browsing or a sandboxed preview), so clips will only last until this tab closes. Open the hosted version for permanent storage.");
     }
+  }
+  if(!opts.skipIndex) await refreshIndex();
+}
+async function getClips(){
+  if(useMemory) return [...memoryStore.values()].sort((a, b) => a.time - b.time);
+  try{ return await idbGetAll(); }
+  catch(e){ useMemory = true; return [...memoryStore.values()].sort((a, b) => a.time - b.time); }
+}
+async function deleteClip(id){
+  if(useMemory){ memoryStore.delete(id); }
+  else{ try{ await idbDelete(id); }catch(e){ memoryStore.delete(id); } }
+  await refreshIndex();
+  await renderEvents();
+}
+async function clearClips(){
+  if(useMemory){ memoryStore.clear(); }
+  else{ try{ await idbClear(); }catch(e){ memoryStore.clear(); } }
+  await refreshIndex();
+  await renderEvents();
+}
+async function refreshIndex(){
+  try{
+    const list = await getClips();
+    localStorage.setItem(INDEX_KEY, JSON.stringify(list.map(c => ({id: c.id, time: c.time, label: c.label, level: c.level, db: c.db, duration: c.duration, demo: !!c.demo}))));
   }catch(e){}
+}
+
+/* ---------- UI helpers ---------- */
+let toastTimer = 0;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+function showNotice(msg){ $("noticeText").textContent = msg; $("notice").hidden = false; }
+function animateNumber(el, to, format){
+  const from = el._v || 0; el._v = to;
+  const start = performance.now(), dur = 450;
+  function step(t){
+    const p = Math.min(1, (t - start) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = format(Math.round(from + (to - from) * e));
+    if(p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function updateStats(){
+  const currentMs = sessionActive ? (Date.now() - sessionStart) : 0;
+  const totalSec = (totalListenMs + currentMs) / 1000;
+  const totalMin = Math.floor(totalSec / 60);
+  $("listenTime").textContent = totalSec >= 3600 ? (totalSec/3600).toFixed(1) + "h" : totalMin + "m";
+  $("timerText").textContent = fmt(currentMs / 1000);
+  $("elapsed").textContent = "SESSION " + fmt(currentMs / 1000);
+  $("peakLevel").textContent = peakRms > 0 ? Math.round(rmsToDb(peakRms)) + " dB" : (allTimePeakDb != null ? allTimePeakDb + " dB" : "—");
+  animateNumber($("eventCount"), events.length, v => String(v));
+  animateNumber($("clipCount"), events.length, v => String(v));
+  $("eventPill").textContent = events.length + (events.length === 1 ? " EVENT" : " EVENTS");
+  $("sessionBadge").textContent = sessionActive ? (demoMode ? "DEMO RUNNING" : "LISTENING") : "NO SESSION";
+  $("sessionBadge").classList.toggle("on", sessionActive);
+  $("nightsCount").textContent = nightsCountCache;
+}
+
+/* ---------- Events list ---------- */
+const ICONS = {
+  Snore: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><path d="M20.6 14.2A8.8 8.8 0 1 1 9.8 3.4a.6.6 0 0 1 .8.8 7 7 0 0 0 9.2 9.2.6.6 0 0 1 .8.8Z"/></svg>',
+  Cough: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><path d="M3 12h3l2-5 3 10 3-8 2 3h5"/></svg>',
+  Talking: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z"/></svg>',
+  Laugh: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+  Movement: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><path d="M4 18V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9"/><path d="M2 18h20M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>',
+  Other: '<svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.7" stroke-linecap="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'
+};
+const LABELS = ["Other","Snore","Cough","Talking","Laugh","Movement"];
+function dayLabel(t){
+  const d = new Date(t), now = new Date();
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  if(same(d, now)) return "Today";
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if(same(d, y)) return "Yesterday";
+  return d.toLocaleDateString([], {weekday: "short", month: "short", day: "numeric"});
+}
+function renderFilterChips(){
+  const box = $("filterChips");
+  box.innerHTML = ["All", ...LABELS].map(l =>
+    '<button class="chip' + (activeFilter === l ? " on" : "") + '" data-f="' + l + '">' + l + '</button>').join("");
+  box.querySelectorAll(".chip").forEach(ch => ch.onclick = () => { activeFilter = ch.dataset.f; renderFilterChips(); renderEvents(); });
+}
+function updateChipCounts(){
+  document.querySelectorAll("#filterChips .chip").forEach(ch => {
+    const f = ch.dataset.f;
+    const n = f === "All" ? events.length : events.filter(e => e.label === f).length;
+    ch.textContent = f + (n ? " (" + n + ")" : "");
+  });
+}
+async function renderEvents(){
+  const tk = ++renderToken;
+  events = await getClips();
+  if(tk !== renderToken) return; // a newer render superseded this one
+  const box = $("events"); box.innerHTML = "";
+  const filtered = activeFilter === "All" ? events : events.filter(e => e.label === activeFilter);
+  if(!filtered.length){
+    box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="#9ba1ab" stroke-width="1.4" stroke-linecap="round"><path d="M20.6 14.2A8.8 8.8 0 1 1 9.8 3.4a.6.6 0 0 1 .8.8 7 7 0 0 0 9.2 9.2.6.6 0 0 1 .8.8Z"/></svg><br>' +
+      (events.length ? "No sounds labelled “" + escapeHtml(activeFilter) + "” yet." : "No sounds saved yet. Start a session and SleepSnitch will watch for louder moments.") + '</div>';
+    if(!events.length){
+      const cta = document.createElement("button");
+      cta.className = "btn empty-cta"; cta.textContent = "Start listening";
+      cta.onclick = () => { document.querySelector(".recorder").scrollIntoView({behavior: "smooth"}); $("recordBtn").focus(); };
+      box.firstChild.appendChild(cta);
+    }
+  }
+  let lastDay = "";
+  for(const e of filtered.slice().reverse()){
+    const day = dayLabel(e.time);
+    if(day !== lastDay){ lastDay = day; const h = document.createElement("div"); h.className = "day-head"; h.textContent = day; box.appendChild(h); }
+    const el = document.createElement("div");
+    el.className = "event";
+    el.dataset.id = e.id;
+    const dbText = (e.db != null ? e.db + " dB" : Math.round((e.level || 0) * 100) + "%");
+    const dbClass = e.db >= -20 ? " veryloud" : e.db >= -30 ? " loud" : "";
+    el.innerHTML =
+      '<div class="event-icon">' + (ICONS[e.label] || ICONS.Other) + '</div>' +
+      '<div><h4>' + escapeHtml(e.label) + ' · ' + nowLabel(e.time) + '</h4>' +
+      '<p>' + escapeHtml(e.duration || "Short") + ' clip</p></div>' +
+      '<div class="event-actions">' +
+        '<span class="db-badge' + dbClass + '">' + dbText + '</span>' +
+        '<span class="tag' + (e.demo ? " demo" : "") + '">' + (e.demo ? "DEMO" : "SAVED") + '</span>' +
+        '<select class="mini labelSelect" aria-label="Label this sound">' +
+          LABELS.map(l => '<option value="' + l + '"' + (e.label === l ? " selected" : "") + '>' + l + '</option>').join("") +
+        '</select>' +
+        '<button class="icon-btn play" aria-label="Play clip" title="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></button>' +
+        '<button class="icon-btn dl" aria-label="Download clip" title="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg></button>' +
+        '<button class="icon-btn del" aria-label="Delete clip" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m3 0v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7"/></svg></button>' +
+      '</div>';
+    el.querySelector(".labelSelect").onchange = async ev => { e.label = ev.target.value; await saveClip(e); renderEvents(); };
+    el.querySelector(".play").onclick = ev => playClip(e, ev.currentTarget);
+    el.querySelector(".dl").onclick = () => downloadClip(e);
+    el.querySelector(".del").onclick = () => deleteClip(e.id);
+    box.appendChild(el);
+  }
+  updateChipCounts();
+  updateStats();
+}
+function playClip(e, btn){
+  if(currentAudio){ currentAudio.pause(); currentAudio = null; }
+  if(currentObjectUrl){ URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
+  document.querySelectorAll(".icon-btn.playing").forEach(b => b.classList.remove("playing"));
+  try{
+    currentObjectUrl = URL.createObjectURL(e.blob);
+    currentAudio = new Audio(currentObjectUrl);
+    if(btn) btn.classList.add("playing");
+    currentAudio.onended = currentAudio.onerror = () => {
+      if(currentObjectUrl){ URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
+      document.querySelectorAll(".icon-btn.playing").forEach(b => b.classList.remove("playing"));
+    };
+    currentAudio.play().catch(() => toast("Playback isn't supported for this clip format in this browser."));
+  }catch(err){ toast("Could not play this clip."); }
+}
+function downloadClip(e, silent){
+  const t = e.blob.type || "";
+  const ext = t.includes("wav") ? "wav" : (t.includes("mp4") || t.includes("m4a") || t.includes("aac")) ? "m4a" : t.includes("ogg") ? "ogg" : "webm";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(e.blob);
+  a.download = "sleepsnitch-" + new Date(e.time).toISOString().replace(/[:.]/g, "-") + "." + ext;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  if(!silent) toast("Clip downloaded");
+}
+async function downloadAllClips(){
+  const list = await getClips();
+  if(!list.length){ toast("No clips to download yet."); return; }
+  toast("Downloading " + list.length + " clips — allow multiple downloads if prompted.");
+  for(const c of list){
+    downloadClip(c, true);
+    await new Promise(r => setTimeout(r, 650));
+  }
+  toast("All clips downloaded");
+}
+
+/* ---------- Waveform ---------- */
+const waveCanvas = $("wave");
+function sizeCanvas(){
+  const r = waveCanvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.floor(r.width * dpr)), h = Math.max(1, Math.floor(r.height * dpr));
+  if(waveCanvas.width !== w || waveCanvas.height !== h){ waveCanvas.width = w; waveCanvas.height = h; }
+  return {w: r.width, h: r.height, dpr};
+}
+function drawWave(){
+  const {w, h, dpr} = sizeCanvas();
+  const g = waveCanvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const mid = h / 2, n = Math.max(28, Math.floor(w / 6));
+  while(smoothHist.length < n) smoothHist.push(0);
+  if(smoothHist.length > n) smoothHist.length = n;
+  const t = Date.now() / 1000;
+  for(let i = 0; i < n; i++){
+    let target;
+    if(sessionActive && history.length){
+      const idx = Math.floor((i / n) * history.length);
+      target = Math.min(1, history[idx] * 4.5);
+    }else{
+      target = 0.04 + 0.03 * Math.abs(Math.sin(t * 0.8 + i * 0.25));
+    }
+    smoothHist[i] += (target - smoothHist[i]) * 0.35;
+    const level = smoothHist[i];
+    const bh = 2 + level * (h - 20);
+    const x = (i / n) * w + 1, bw = Math.max(2, w / n - 2.5);
+    g.fillStyle = level > 0.7 ? "#e5484d" : level > 0.4 ? "#e3b341" : "#8a93a3";
+    g.globalAlpha = sessionActive ? (0.5 + level * 0.5) : 0.4;
+    g.beginPath();
+    if(g.roundRect) g.roundRect(x, mid - bh/2, bw, bh, 2); else g.rect(x, mid - bh/2, bw, bh);
+    g.fill();
+  }
+  if(sessionActive){
+    const thr = Math.min(1, thresholdRms() * 4.5);
+    const y = mid - (2 + thr * (h - 20)) / 2;
+    g.globalAlpha = 0.85; g.strokeStyle = "#e3b341"; g.setLineDash([4, 4]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); g.setLineDash([]);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- Detection loop ---------- */
+function tick(){
+  try{
+    if(sessionActive){
+      const rms = demoMode ? demoLevel() : getRms();
+      const db = rmsToDb(rms);
+      peakRms = Math.max(peakRms, rms);
+      history.push(rms);
+      if(history.length > 160) history.shift();
+      const pct = rmsToPct(rms);
+      meterLevel += (pct - meterLevel) * 0.3;
+      $("meterFill").style.width = meterLevel + "%";
+      $("levelText").textContent = "INPUT LEVEL " + Math.round(meterLevel) + "%";
+      $("waveDb").textContent = Math.round(db) + " dB";
+      if(!demoMode){
+        if(rms < 0.002){ if(!silenceSince) silenceSince = Date.now(); }
+        else silenceSince = 0;
+        if(silenceSince && Date.now() - silenceSince > 5000 && !silenceWarned){
+          silenceWarned = true;
+          toast("No input detected — is the mic muted or covered?");
+        }
+      }
+      const now = Date.now();
+      if(rms > thresholdRms()) aboveCount++; else aboveCount = 0;
+      const cooldownMs = Number($("cooldown").value) * 1000;
+      if(aboveCount >= 3 && now - lastEventAt > cooldownMs && !pending){
+        lastEventAt = now; aboveCount = 0;
+        beginEvent(rms, db);
+      }
+      if(pending && now >= pending.endAt) finishEvent();
+    }
+  }catch(e){ console.error("Tick error:", e); }
+  drawWave();
+  requestAnimationFrame(tick);
+}
+function beginEvent(rms, db){
+  const cutoff = Date.now() - 3000;
+  const pre = recentChunks.filter(c => c.time >= cutoff).map(c => c.data);
+  pending = { parts: [...pre], level: rms, db, start: Date.now(), endAt: Date.now() + Number($("clipLength").value) * 1000 };
+  toast("Sound detected — saving a short clip…");
+}
+async function finishEvent(){
+  if(!pending) return;
+  const p = pending; pending = null;
+  let blob;
+  if(demoMode){ blob = makeDemoWav(p.db); }
+  else{ blob = new Blob(p.parts, {type: (mediaRecorder && mediaRecorder.mimeType) || "audio/webm"}); }
+  if(!blob || blob.size < 800) return;
+  const item = { id: newId(), time: p.start, label: "Other", level: p.level, db: Math.round(p.db),
+    duration: Math.round((Date.now() - p.start) / 1000) + " sec", blob, demo: demoMode };
+  await saveClip(item);
+  eventsThisSession++;
+  await renderEvents();
+  toast("Clip saved — it will be here next time you open SleepSnitch");
+}
+
+/* ---------- Demo mode ---------- */
+function demoLevel(){
+  const now = Date.now();
+  if(now < demoSpikeUntil) return demoSpikeLevel * (0.65 + Math.random() * 0.7);
+  if(Math.random() < 0.0035){
+    demoSpikeUntil = now + 1400 + Math.random() * 2600;
+    demoSpikeLevel = 0.09 + Math.random() * 0.22;
+  }
+  return 0.006 * (0.4 + Math.random());
+}
+function makeDemoWav(db){
+  const sr = 22050, dur = 2.5, n = Math.floor(sr * dur);
+  const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const writeStr = (off, s) => { for(let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); writeStr(8, "WAVE");
+  writeStr(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  writeStr(36, "data"); v.setUint32(40, n * 2, true);
+  const freq = 180 + Math.max(0, (db + 40)) * 6;
+  for(let i = 0; i < n; i++){
+    const t = i / sr, env = Math.min(1, t * 6) * Math.max(0, 1 - t / dur);
+    const s = Math.sin(2 * Math.PI * freq * t) * 0.55 + (Math.random() * 2 - 1) * 0.12;
+    v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, s * env)) * 32767, true);
+  }
+  return new Blob([buf], {type: "audio/wav"});
+}
+
+/* ---------- Session control ---------- */
+function pickMime(){
+  if(typeof MediaRecorder === "undefined") return "";
+  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+  for(const m of candidates){ try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} }
+  return "";
+}
+function handleMicError(e){
+  console.error(e);
+  $("micHelp").hidden = false;
+  if(e && e.name === "NotAllowedError") toast("Microphone permission was denied — check the site settings icon.");
+  else if(e && e.name === "NotFoundError") toast("No microphone found on this device.");
+  else if(e && e.name === "NotReadableError") toast("Microphone is busy in another app.");
+  else toast("Could not start the microphone. See the tips below the button.");
+}
+function stopTracks(){ if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+
+async function startSession(opts = {}){
+  if(sessionActive || busy) return;
+  busy = true;
+  try{ await startSessionInner(opts); } finally{ busy = false; }
+}
+async function startSessionInner(opts = {}){
+  const auto = !!opts.auto;
+  $("micHelp").hidden = true;
+  if(!demoMode){
+    if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      showNotice("This page isn't in a secure context, so browsers block microphone access. Use the hosted (HTTPS) version or localhost — or try Demo mode to see everything working.");
+      toast("Microphone needs HTTPS or localhost. Demo mode is available.");
+      return;
+    }
+    try{
+      const deviceId = $("deviceSelect").value;
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: deviceId ? {exact: deviceId} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        video: false
+      });
+    }catch(e){ handleMicError(e); return; }
+    try{
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === "suspended") await audioCtx.resume();
+      const src = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.55;
+      timeData = new Uint8Array(analyser.fftSize);
+      src.connect(analyser);
+      const mime = pickMime();
+      mediaRecorder = new MediaRecorder(stream, mime ? {mimeType: mime} : undefined);
+      mediaRecorder.ondataavailable = e => {
+        if(!e.data || !e.data.size) return;
+        const t = Date.now();
+        recentChunks.push({data: e.data, time: t});
+        while(recentChunks.length && recentChunks[0].time < t - 6000) recentChunks.shift();
+        if(pending) pending.parts.push(e.data);
+      };
+      mediaRecorder.onerror = e => console.error("Recorder error", e);
+      mediaRecorder.start(500);
+    }catch(e){
+      toast("Could not start the recorder: " + e.message);
+      stopTracks();
+      return;
+    }
+    stream.getAudioTracks().forEach(t => {
+      t.onended = () => { if(sessionActive){ toast("Microphone disconnected — session ended."); stopSession(); } };
+    });
+  }
+  sessionActive = true; autoStarted = auto;
+  sessionStart = Date.now(); peakRms = 0; lastEventAt = 0; aboveCount = 0; eventsThisSession = 0;
+  history = []; recentChunks = []; pending = null; silenceSince = 0; silenceWarned = false; meterLevel = 0;
+  $("lastSummary").hidden = true;
+  updateSessionUI();
+  clearInterval(elapsedTimer); elapsedTimer = setInterval(updateStats, 500);
+  if($("wakeLock").checked) requestWakeLock();
+  startKeepAlive();
+  updateStats();
+  toast(demoMode ? "Demo mode on — simulating night sounds" : "Listening… keep this tab open");
+  refreshDevices();
+}
+
+async function stopSession(){
+  if(!sessionActive || busy) return;
+  busy = true;
+  try{ await stopSessionInner(); } finally{ busy = false; }
+}
+async function stopSessionInner(){
+  sessionActive = false;
+  const durationSec = Math.round((Date.now() - sessionStart) / 1000);
+  const peakDb = Math.round(rmsToDb(peakRms));
+  const sounds = eventsThisSession;
+  totalListenMs += Date.now() - sessionStart;
+  clearInterval(elapsedTimer);
+  if(pending) await finishEvent();
+  try{ if(mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop(); }catch(e){}
+  mediaRecorder = null;
+  stopTracks();
+  if(audioCtx){ try{ await audioCtx.close(); }catch(e){} audioCtx = null; }
+  analyser = null; timeData = null;
+  if(wakeLock){ try{ await wakeLock.release(); }catch(e){} wakeLock = null; }
+  demoMode = false;
+  stopKeepAlive();
+  $("meterFill").style.width = "0%"; meterLevel = 0;
+  $("levelText").textContent = "INPUT LEVEL 0%";
+  $("waveDb").textContent = "— dB";
+  if(allTimePeakDb == null || peakDb > allTimePeakDb) allTimePeakDb = peakDb;
+  saveTotals();
+  if(durationSec >= 15 || sounds > 0){
+    saveNight({startedAt: sessionStart, durationSec, sounds, peakDb});
+  }
+  renderLastSummary();
+  updateSessionUI();
+  updateStats();
+  toast("Session ended — clips saved locally");
+}
+
+function updateSessionUI(){
+  const btn = $("recordBtn");
+  btn.classList.toggle("active", sessionActive);
+  btn.setAttribute("aria-pressed", sessionActive ? "true" : "false");
+  btn.setAttribute("aria-label", sessionActive ? "Stop listening" : "Start listening");
+  $("recordIconMic").style.display = sessionActive ? "none" : "block";
+  $("recordIconStop").style.display = sessionActive ? "block" : "none";
+  $("demoBtn").disabled = sessionActive;
+  const st = $("topStatus");
+  st.className = "top-status" + (sessionActive ? (demoMode ? " demo" : " live") : "");
+  $("topStatusText").textContent = sessionActive ? (demoMode ? "Demo running" : "Listening · mic active") : "Microphone off";
+  $("recState").innerHTML = sessionActive
+    ? (demoMode ? "Simulating a night of sounds…" : "Listening — <b>clap or speak</b> to test detection.")
+    : "Tap the button to start. Speak or clap to test the mic.";
+  updateStats();
+}
+
+async function requestWakeLock(){
+  if(!("wakeLock" in navigator)) return;
+  try{
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+      if(sessionActive && $("wakeLock").checked) requestWakeLock();
+    });
+  }catch(e){}
+}
+
+/* ---------- Background keep-alive (stays running when you switch apps) ---------- */
+function makeSilentWavUrl(){
+  const sr = 8000, n = sr;
+  const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const writeStr = (off, s) => { for(let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); writeStr(8, "WAVE");
+  writeStr(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  writeStr(36, "data"); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], {type: "audio/wav"}));
+}
+async function startKeepAlive(){
+  if(!$("bgMode").checked) return;
+  try{
+    if(!keepAliveAudio){
+      keepAliveAudio = new Audio(makeSilentWavUrl());
+      keepAliveAudio.loop = true;
+    }
+    await keepAliveAudio.play().catch(() => {});
+  }catch(e){}
+  if("mediaSession" in navigator){
+    try{
+      navigator.mediaSession.metadata = new MediaMetadata({title: "SleepSnitch — Listening", artist: "Night recorder", album: "SleepSnitch"});
+      navigator.mediaSession.playbackState = "playing";
+      navigator.mediaSession.setActionHandler("play", () => { if(!sessionActive) startSession(); });
+      navigator.mediaSession.setActionHandler("pause", () => { if(sessionActive) stopSession(); });
+      navigator.mediaSession.setActionHandler("stop", () => { if(sessionActive) stopSession(); });
+    }catch(e){}
+  }
+  clearInterval(keepAliveTimer);
+  keepAliveTimer = setInterval(() => {
+    if(!sessionActive) return;
+    if(audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    if($("wakeLock").checked && !wakeLock) requestWakeLock();
+  }, 10000);
+}
+function stopKeepAlive(){
+  if(keepAliveTimer){ clearInterval(keepAliveTimer); keepAliveTimer = null; }
+  if(keepAliveAudio){ try{ keepAliveAudio.pause(); }catch(e){} }
+  if("mediaSession" in navigator){ try{ navigator.mediaSession.playbackState = "none"; }catch(e){} }
+}
+
+/* ---------- Last session summary ---------- */
+function renderLastSummary(){
+  const arr = loadNights();
+  const box = $("lastSummary");
+  if(!arr.length){ box.hidden = true; return; }
+  const n = arr[0];
+  const d = new Date(n.startedAt);
+  const label = d.toLocaleDateString([], {weekday: "short", month: "short", day: "numeric"});
+  $("lastSummaryText").innerHTML = "<b>Last session · " + escapeHtml(label) + "</b> — " + fmt(n.durationSec) + " · " + n.sounds + " sound" + (n.sounds === 1 ? "" : "s") + " · peak " + n.peakDb + " dB";
+  box.hidden = false;
+}
+$("dismissSummary").onclick = () => { $("lastSummary").hidden = true; };
+
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden"){
+    saveTotals();
+    if(sessionActive && pending) finishEvent();
+  }
+  if(document.visibilityState === "visible"){
+    if(sessionActive && $("wakeLock").checked) requestWakeLock();
+    if(sessionActive && audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+  }
+});
+window.addEventListener("pagehide", () => {
+  saveTotals();
+  if(sessionActive && mediaRecorder && mediaRecorder.state !== "inactive"){ try{ mediaRecorder.stop(); }catch(e){} }
+});
+
+/* ---------- Devices ---------- */
+async function refreshDevices(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  try{
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const mics = devs.filter(d => d.kind === "audioinput");
+    const sel = $("deviceSelect"), cur = sel.value;
+    sel.innerHTML = '<option value="">Default microphone</option>' +
+      mics.map((d, i) => '<option value="' + escapeHtml(d.deviceId) + '">' + escapeHtml(d.label || ("Microphone " + (i + 1))) + '</option>').join("");
+    if(cur) sel.value = cur;
+  }catch(e){}
+}
+if(navigator.mediaDevices && navigator.mediaDevices.addEventListener){
+  navigator.mediaDevices.addEventListener("devicechange", refreshDevices);
+}
+$("deviceSelect").addEventListener("change", async () => {
+  if(sessionActive && !demoMode){
+    toast("Switching microphone…");
+    await stopSession();
+    await startSession();
+  }
+});
+
+/* ---------- Nights log ---------- */
+function loadNights(){ try{ return JSON.parse(localStorage.getItem(NIGHTS_KEY) || "[]"); }catch(e){ return []; } }
+function saveNight(entry){
+  try{
+    const arr = loadNights();
+    arr.unshift(entry);
+    localStorage.setItem(NIGHTS_KEY, JSON.stringify(arr.slice(0, 30)));
+  }catch(e){}
+  renderNights();
+}
+function renderNights(){
+  const arr = loadNights();
+  nightsCountCache = arr.length;
+  const box = $("nightsList");
+  if(!arr.length){ box.innerHTML = '<p class="note">No nights logged yet. Finished sessions appear here automatically — and they survive reloads.</p>'; return; }
+  box.innerHTML = arr.map(n => {
+    const d = new Date(n.startedAt);
+    const label = d.toLocaleDateString([], {weekday: "short", month: "short", day: "numeric"}) + " · " + d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+    return '<div class="night-row"><div><b>' + escapeHtml(label) + '</b><span>' + n.sounds + ' sound' + (n.sounds === 1 ? "" : "s") + ' · peak ' + n.peakDb + ' dB</span></div><span class="night-dur">' + fmt(n.durationSec) + '</span></div>';
+  }).join("");
+}
+
+/* ---------- Backup & restore ---------- */
+function blobToBase64(blob){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+function base64ToBlob(b64, type){
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type: type || "audio/webm"});
+}
+async function exportBackup(){
+  const clips = await getClips();
+  if(!clips.length){ toast("No clips to back up yet."); return; }
+  toast("Preparing backup…");
+  const out = {app: "SleepSnitch", version: 1, exportedAt: new Date().toISOString(), clips: []};
+  for(const c of clips){
+    out.clips.push({id: c.id, time: c.time, label: c.label, level: c.level, db: c.db, duration: c.duration, demo: !!c.demo, type: c.blob.type, audio: await blobToBase64(c.blob)});
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out)], {type: "application/json"}));
+  a.download = "sleepsnitch-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Backup downloaded — keep it somewhere safe");
+}
+async function importBackup(file){
+  if(!file) return;
+  if(file.size > 60 * 1024 * 1024){ toast("Backup file is too large (max 60 MB)."); return; }
+  try{
+    const data = JSON.parse(await file.text());
+    if(!data || data.app !== "SleepSnitch" || !Array.isArray(data.clips)) throw new Error("Not a SleepSnitch backup");
+    let count = 0;
+    for(const c of data.clips){
+      if(!c.audio || !c.time) continue;
+      await saveClip({id: c.id || newId(), time: Number(c.time), label: LABELS.includes(c.label) ? c.label : "Other",
+        level: Number(c.level) || 0, db: c.db != null ? Number(c.db) : null, duration: c.duration || "Short",
+        blob: base64ToBlob(c.audio, c.type), demo: !!c.demo}, {skipIndex: true});
+      count++;
+    }
+    await refreshIndex();
+    await renderEvents();
+    toast("Restored " + count + " clip" + (count === 1 ? "" : "s") + " — they're remembered now");
+  }catch(e){
+    console.error(e);
+    toast("Could not read that backup file.");
+  }
+}
+
+/* ---------- Diagnostics ---------- */
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#46a758" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>';
+const WARN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#e3b341" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4M12 17.5h.01"/></svg>';
+const FAIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#e5484d" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
+function diagRow(name, status, detail){
+  const icon = status === "pass" ? CHECK_SVG : status === "warn" ? WARN_SVG : FAIL_SVG;
+  return '<div class="diag-row"><span class="ic">' + icon + '</span><span class="nm">' + escapeHtml(name) + '</span><span class="dt">' + escapeHtml(detail || "") + '</span></div>';
+}
+async function runDiagnostics(){
+  const rows = [];
+  rows.push(diagRow("Secure context (HTTPS / localhost)", window.isSecureContext ? "pass" : "fail", window.isSecureContext ? "Mic allowed" : "Mic blocked — use HTTPS"));
+  rows.push(diagRow("Microphone API", (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? "pass" : "fail", ""));
+  rows.push(diagRow("MediaRecorder", typeof MediaRecorder !== "undefined" ? "pass" : "fail", typeof MediaRecorder !== "undefined" ? pickMime() || "default format" : ""));
+  rows.push(diagRow("AudioContext", (window.AudioContext || window.webkitAudioContext) ? "pass" : "fail", ""));
+  rows.push(diagRow("Wake Lock", "wakeLock" in navigator ? "pass" : "warn", "Optional — keeps screen on"));
+  let lsOk = false;
+  try{ localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); lsOk = true; }catch(e){}
+  rows.push(diagRow("Local storage (settings & night log)", lsOk ? "pass" : "fail", ""));
+  let idbOk = false, idbDetail = "";
+  try{
+    const testItem = {id: "__diag__", time: Date.now(), label: "Other", level: 0, db: -60, duration: "test", blob: new Blob(["x"])};
+    await idbPut(testItem);
+    const got = await idbGetAll();
+    idbOk = got.some(c => c.id === "__diag__");
+    await idbDelete("__diag__");
+    idbDetail = idbOk ? "Save + read-back verified" : "Read-back mismatch";
+  }catch(e){ idbDetail = e.message || "Unavailable"; }
+  rows.push(diagRow("Database (clip storage)", idbOk ? "pass" : "fail", idbDetail));
+  rows.push(diagRow("Storage mode", useMemory ? "warn" : "pass", useMemory ? "Memory fallback — tab only" : "IndexedDB — permanent"));
+  let storageText = "";
+  try{
+    const est = await navigator.storage.estimate();
+    if(est.usage != null) storageText = "Storage: " + fmtBytes(est.usage) + " used" + (est.quota ? " of " + fmtBytes(est.quota) : "");
+  }catch(e){}
+  $("diagList").innerHTML = rows.join("");
+  $("diagStorage").textContent = storageText;
+  $("footerStorage").textContent = storageText;
+  const fails = rows.filter(r => r.includes(FAIL_SVG)).length;
+  const warns = rows.filter(r => r.includes(WARN_SVG)).length;
+  $("diagSummary").textContent = fails ? fails + " ISSUE" + (fails > 1 ? "S" : "") : warns ? "READY · " + warns + " NOTE" + (warns > 1 ? "S" : "") : "ALL CHECKS PASS";
+  $("diagSummary").classList.toggle("on", !fails);
+}
+async function persistenceTest(){
+  toast("Saving a test sound…");
+  const item = {id: newId(), time: Date.now(), label: "Other", level: 0.12, db: -28, duration: "3 sec",
+    blob: makeDemoWav(-28), demo: true};
+  await saveClip(item);
+  const got = await getClips();
+  const found = got.some(c => c.id === item.id);
+  await renderEvents();
+  if(found){
+    toast("Verified — the test sound is saved and will survive a reload. Try refreshing the page.");
+    document.getElementById("events").scrollIntoView({behavior: "smooth", block: "center"});
+  }else{
+    toast("The test sound could not be read back — storage may be blocked in this view.");
+  }
+  runDiagnostics();
+}
+
+/* ---------- Modal ---------- */
+function openModal(onConfirm){
+  modalConfirmFn = onConfirm;
+  $("modalBack").classList.add("open");
+  $("modalCancel").focus();
+}
+function closeModal(){ $("modalBack").classList.remove("open"); modalConfirmFn = null; $("clearBtn").focus(); }
+$("modalCancel").onclick = closeModal;
+$("modalBack").addEventListener("click", e => { if(e.target === $("modalBack")) closeModal(); });
+$("modalConfirm").onclick = () => { const fn = modalConfirmFn; closeModal(); if(fn) fn(); };
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); });
+
+/* ---------- Buttons ---------- */
+$("recordBtn").onclick = () => { if(sessionActive) stopSession(); else startSession(); };
+$("demoBtn").onclick = () => { demoMode = true; startSession(); };
+$("exportBtn").onclick = async () => {
+  const list = await getClips();
+  if(!list.length){ toast("No events to export yet."); return; }
+  const rows = [["Time", "Label", "Level (dB)", "Duration"], ...list.map(e => [new Date(e.time).toISOString(), e.label, e.db != null ? e.db : "", e.duration || ""])];
+  const csv = rows.map(r => r.map(v => '"' + String(v).replaceAll('"', '""') + '"').join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"}));
+  a.download = "sleepsnitch-events.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Event list exported");
+};
+$("backupBtn").onclick = exportBackup;
+$("downloadAllBtn").onclick = downloadAllClips;
+$("importBtn").onclick = () => $("importFile").click();
+$("importFile").onchange = e => { importBackup(e.target.files[0]); e.target.value = ""; };
+$("clearBtn").onclick = () => openModal(async () => { await clearClips(); toast("All saved clips deleted."); });
+$("clearNightsBtn").onclick = () => { try{ localStorage.removeItem(NIGHTS_KEY); }catch(e){} renderNights(); updateStats(); toast("Night log cleared."); };
+$("runDiagBtn").onclick = runDiagnostics;
+$("persistTestBtn").onclick = persistenceTest;
+$("schedule").onchange = () => toast($("schedule").checked ? "Schedule armed — keep this page open." : "Schedule disabled.");
+
+/* ---------- Schedule ---------- */
+function timeToMinutes(s){ const p = String(s || "0:0").split(":").map(Number); return (p[0] || 0) * 60 + (p[1] || 0); }
+setInterval(() => {
+  if(!$("schedule").checked || demoMode) return;
+  const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+  const start = timeToMinutes($("bedtime").value), end = timeToMinutes($("wake").value);
+  const inWindow = start < end ? (m >= start && m < end) : (m >= start || m < end);
+  if(inWindow && !sessionActive) startSession({auto: true});
+  else if(!inWindow && sessionActive && autoStarted) stopSession();
+}, 5000);
+
+/* ---------- Scroll header ---------- */
+window.addEventListener("scroll", () => {
+  $("topbar").classList.toggle("scrolled", window.scrollY > 8);
+}, {passive: true});
+
+/* ---------- Install (PWA) ---------- */
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredInstall = e;
+  $("installBtn").hidden = false;
+});
+$("installBtn").onclick = async () => {
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice.catch(() => {});
+  deferredInstall = null;
+  $("installBtn").hidden = true;
+};
+window.addEventListener("appinstalled", () => {
+  $("installBtn").hidden = true;
+  toast("SleepSnitch installed — find it on your home screen.");
+});
+if("serviceWorker" in navigator && window.isSecureContext){
+  /* service worker disabled in native app */
+}
+
+/* ---------- Init ---------- */
+loadSettings();
+loadTotals();
+renderFilterChips();
+renderNights();
+renderLastSummary();
+if(!window.isSecureContext){
+  showNotice("You're viewing this file directly (not over HTTPS), so the microphone will be blocked. Open the hosted version or localhost to record — or use Demo mode here to see the full app working. Saved clips still persist in this browser.");
+}
+(async () => {
+  const list = await getClips();
+  let idx = [];
+  try{ idx = JSON.parse(localStorage.getItem(INDEX_KEY) || "[]"); }catch(e){}
+  if(list.length === 0 && idx.length > 0){
+    showNotice("Found " + idx.length + " remembered sound" + (idx.length === 1 ? "" : "s") + " in the backup index, but no audio in this browser's storage. Use “Restore from backup” to bring them back, or open the browser where you recorded.");
+  }
+  await renderEvents();
+  runDiagnostics();
 })();
+requestAnimationFrame(tick);
+window.addEventListener("resize", drawWave);
+window.addEventListener("beforeunload", e => { if(sessionActive){ e.preventDefault(); e.returnValue = ""; } });
 </script>
+<script src="native.js"></script>
 </body>
 </html>

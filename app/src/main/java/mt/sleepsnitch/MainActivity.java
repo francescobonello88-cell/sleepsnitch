@@ -20,7 +20,9 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
@@ -143,6 +145,13 @@ public class MainActivity extends Activity {
             if (svc != null) svc.clearAll();
         }
 
+        @JavascriptInterface public void saveAudio(int id) {
+            final int fid = id;
+            runOnUiThread(new Runnable() {
+                public void run() { saveAudioToDownloads(fid); }
+            });
+        }
+
         @JavascriptInterface public void saveText(String name, String content) {
             final String n = name, c = content;
             runOnUiThread(new Runnable() {
@@ -184,5 +193,41 @@ public class MainActivity extends Activity {
         super.onPause();
         // keep the page running: recording lives in the service, polling resumes on return
         if (webView != null) webView.onPause();
+    }
+
+    private void saveAudioToDownloads(int id) {
+        SleepRecordService svc = SleepRecordService.instance;
+        if (svc == null) { Toast.makeText(this, "Start a session first", Toast.LENGTH_SHORT).show(); return; }
+        File f = svc.clipFile(id);
+        if (f == null || !f.exists()) { Toast.makeText(this, "Clip file not found", Toast.LENGTH_SHORT).show(); return; }
+        String name = "sleepsnitch-" + f.getName().replace("clip_", "");
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                cv.put(MediaStore.MediaColumns.MIME_TYPE, "audio/mp4");
+                cv.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/SleepSnitch");
+                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
+                if (uri == null) throw new IOException("insert failed");
+                OutputStream os = getContentResolver().openOutputStream(uri);
+                copyFile(f, os);
+            } else {
+                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SleepSnitch");
+                if (!dir.exists()) dir.mkdirs();
+                copyFile(f, new FileOutputStream(new File(dir, name)));
+            }
+            Toast.makeText(this, "Saved to Downloads/SleepSnitch", Toast.LENGTH_SHORT).show();
+        } catch (Throwable t) {
+            Toast.makeText(this, "Could not save clip", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyFile(File in, OutputStream os) throws IOException {
+        FileInputStream fis = new FileInputStream(in);
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = fis.read(buf)) > 0) os.write(buf, 0, n);
+        fis.close();
+        os.close();
     }
 }

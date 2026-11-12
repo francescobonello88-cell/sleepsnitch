@@ -355,6 +355,8 @@ public class SleepRecordService extends Service {
     }
 
     // ---------- playback and deletion ----------
+    public File clipFile(int id) { return fileFor(id); }
+
     private File fileFor(int id) {
         String name = null;
         synchronized (lock) {

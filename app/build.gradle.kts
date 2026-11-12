@@ -8,8 +8,8 @@ android {
         applicationId = "mt.sleepsnitch"
         minSdk = 24
         targetSdk = 34
-        versionCode = 6
-        versionName = "3.2"
+        versionCode = 7
+        versionName = "4.0"
     }
 
     buildTypes {
